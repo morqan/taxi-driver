@@ -1,124 +1,148 @@
-import React, { Component } from 'react'
-import {Button, View, Text, Dimensions} from 'react-native'
-import { connect } from 'react-redux'
-import Modal, {
-  ModalTitle,
-  ModalContent,
-  ModalFooter,
-  ModalButton,
-  ScaleAnimation
-} from 'react-native-modals'
-const {width, height} = Dimensions.get('window')
+import React, {Component} from 'react'
+import {ScrollView, Text, Dimensions, StyleSheet, View} from 'react-native'
+import {connect} from 'react-redux'
+import {Images} from '../Themes'
 
- // Styles
+// Add Actions - replace 'Your' with whatever your reducer is called :)
+// import YourActions from '../Redux/YourRedux'
+
+// Styles
 import styles from './Styles/TestScreenStyle'
-import MapView,{Marker} from "react-native-maps";
+import MapView from "react-native-maps";
+import MyButton from "../Components/MyButton";
+import I18n from "../I18n";
+
+
+import MapViewDirections from 'react-native-maps-directions';
+
+const {width, height} = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
+const GOOGLE_MAPS_APIKEY = 'AIzaSyCMfIpRhn8QaGkYQ0I5KPWvFT1kLbA-DAM';
+
 
 class TestScreen extends Component {
-  state = {
-    scaleAnimationModal: false,
-  };
 
-
-  state = {
-    latitude: 0,
-    longitude: 0,
-    error: null
-  }
 
   componentDidMount() {
 
-    navigator.geolocation.getCurrentPosition(
-      position => {
 
-        this.setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          error: null
-        })
+    this.setState({
+      region: {
+        latitude: 37.771707,
+        longitude: -122.4053769,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0922 * ASPECT_RATIO
       },
-      error => this.setState({error: error.message}),
-      {enableHighAccuracy: true, timeout: 20000}
-    )
+      coordinates: [
+        {
+          latitude: 37.3317876,
+          longitude: -122.0054812,
+        },
+        {
+          latitude: 37.771707,
+          longitude: -122.4053769,
+        },
+      ]
+    });
+
+  }
+
+  constructor(props) {
+    super(props);
+
+    // AirBnB's Office, and Apple Park
+    this.state = {
+      coordinates: [
+        {
+          latitude: 37.3317876,
+          longitude: -122.0054812,
+        },
+        {
+          latitude: 37.771707,
+          longitude: -122.4053769,
+        },
+      ],
+      region: {
+        latitude: 37.771707,
+        longitude: -122.4053769,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421
+      }
+    };
+
+    this.mapView = null;
+  }
+
+  onMapPress = (e) => {
+    this.setState({
+      coordinates: [
+        ...this.state.coordinates,
+        e.nativeEvent.coordinate,
+      ],
+    });
   }
 
 
-  render () {
-    let that = this;
-    setTimeout(function(){that.setState({  scaleAnimationModal: true,})}, 1000);
+  render() {
+
     return (
-      <View >
-
-        <Modal
-          onTouchOutside={() => {
-            this.setState({ scaleAnimationModal: false });
+      <View style={styles.container}>
+        <MapView
+          initialRegion={{
+            latitude: this.state.region.latitude,
+            longitude: this.state.region.longitude,
+            latitudeDelta: this.state.region.latitudeDelta,
+            longitudeDelta: this.state.region.latitudeDelta,
           }}
-          width={0.9}
-          visible={this.state.scaleAnimationModal}
-          onSwipeOut={() => this.setState({ scaleAnimationModal: false })}
-          modalAnimation={new ScaleAnimation()}
-          onHardwareBackPress={() => {
-            console.log('onHardwareBackPress');
-            this.setState({ scaleAnimationModal: false });
-            return true;
-          }}
-          modalTitle={
-            <ModalTitle
-              title="YENİ SİFARİŞ"
-              align="center"
-              style={styles.notificationTitle}
-              textStyle={styles.notificationTitle}
-            />
-          }
-          footer={
-            <ModalFooter>
-              <ModalButton
-                text="İMTİNA ET"
-                textStyle={{ color: '#451E5D', fontWeight: 'bold' }}
-                bordered
-                onPress={() => {
-                  this.setState({ scaleAnimationModal: false });
-                }}
-                key="button-1" />
-              <ModalButton
-                text="QƏBUL ET"
-                style={{ backgroundColor: '#451E5D' }}
-                textStyle={{ color: '#fff', fontWeight: 'bold' }}
-                bordered
-                onPress={() => {
-                  this.setState({ scaleAnimationModal: false });
-                }}
-                key="button-2"
-              />
-            </ModalFooter>
-          }
+          style={StyleSheet.absoluteFill}
+          ref={c => this.mapView = c}
+          // onPress={this.onMapPress}
         >
-          <ModalContent
-            style={{ backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center',height: 150  }}  >
-            <View style={styles.container}>
-              <MapView style={{flex:1,height:150,width:width*0.8}}
-                       showsUserLocation
-                       provider={MapView.PROVIDER_GOOGLE}
-                       initialRegion={{
-                         latitude: this.state.latitude,
-                         longitude: this.state.longitude,
-                         latitudeDelta: 0.0922,
-                         longitudeDelta: 0.0421
-                       }}
 
+          {this.state.coordinates.map((coordinate, index) =>
+            <MapView.Marker key={`coordinate_${index}`} image={Images.marker} coordinate={coordinate}/>
+          )}
+          {(this.state.coordinates.length >= 2) && (
+            <MapViewDirections
+              origin={this.state.coordinates[0]}
+              waypoints={(this.state.coordinates.length > 2) ? this.state.coordinates.slice(1, -1) : null}
+              destination={this.state.coordinates[this.state.coordinates.length - 1]}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={3}
+              strokeColor="#451E5D"
+              optimizeWaypoints={true}
+              onStart={(params) => {
+                console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
+              }}
+              onReady={result => {
+                console.log('Distance: ${result.distance} km')
+                console.log('Duration: ${result.duration} min.')
 
-              >
-                {<Marker coordinate={this.state}/>}
-              </MapView>
-              <View style={{ backgroundColor: '#fff'  }}>
-                <Text style={styles.notificationTextB}>Təbriz küç 52 / Gənclik Mall.</Text>
-              </View>
-            </View>
+                this.mapView.fitToCoordinates(result.coordinates, {
+                  edgePadding: {
+                    right: (width / 20),
+                    bottom: (height / 20),
+                    left: (width / 20),
+                    top: (height / 20),
+                  }
+                });
+              }}
+              onError={(errorMessage) => {
+                // console.log('GOT AN ERROR');
+              }}
+            />
+          )}
+        </MapView>
+        <View style={styles.buttonContainer}>
 
-          </ModalContent>
-        </Modal>
-
-
+          <MyButton
+            onPress={() => this.props.navigation.navigate('OrderScreen')}
+            backgroundColor='#451E5D'
+            color='#fff'
+            borderColor='#451E5D'
+            text={I18n.t('teyinEt')}
+          />
+        </View>
       </View>
     )
   }
@@ -126,12 +150,12 @@ class TestScreen extends Component {
 
 const mapStateToProps = (state) => {
   return {
+
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
-  return {
-  }
+  return {}
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(TestScreen)

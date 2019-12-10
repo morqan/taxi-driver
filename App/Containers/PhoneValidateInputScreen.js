@@ -8,7 +8,7 @@ import I18n from '../I18n';
 import PhoneInput from 'react-native-phone-input'
 import MyInput from '../Components/MyInput';
 import MyButton from '../Components/MyButton';
-
+import {driverRegistration, toUrl} from '../Config/API'
 // Styles
 import styles from './Styles/RegisterScreenStyle'
 
@@ -16,9 +16,11 @@ import styles from './Styles/RegisterScreenStyle'
 const {width} = Dimensions.get('window');
 
 class PhoneValidateInputScreen extends Component {
+
   state = {
-    mobile: null,
-    password: null,
+    country_code: '',
+    number: '',
+    step: 'phone_number'
 
   }
   onPres = () => {
@@ -31,22 +33,77 @@ class PhoneValidateInputScreen extends Component {
   }
   onPhoneNumberChange = () => {
     this.setState({
-      code: this.phone.getCountryCode(),
-      mobile: this.phone.getValue(),
+      country_code: this.phone.getCountryCode(),
+      number: this.phone.getValue(),
     });
     // const {mobile, password} = this.state
     // this.props.attemptLogin(mobile, password)
 
   };
-  onPasswordChange = (text) => {
-    this.setState({password: text});
-    // const {mobile, password} = this.state
-    // this.props.attemptLogin(mobile, password)
-  };
+
+  onPressLogin = () => {
+    let number = this.state.number;
+    let country_code = '+' + this.state.country_code;
+    let num = number.replace(country_code, '');
+    let body = {
+      country_code: country_code,
+      number: num,
+      step: "phone_number"
+    }
+
+    // this.setState({loading: true})
+    const self = this
+
+    // console.log(body, login)
+    fetch(driverRegistration, {
+      body: JSON.stringify(body),
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+      },
+
+    })
+      .then(json)
+      .then(status)
+      .then(function (data) {
+        console.log('Request succeeded with JSON response', data);
+         useResponse(data)
+      })
+      .catch(function (error) {
+        console.log(error);
+        console.log('err');
+      });
+
+    function status(response) {
+      console.log(response)
+      console.log('status');
+      self.setState({loading: false})
+      if (response.status === "pending") {
+        return Promise.resolve(response)
+      } else {
+        return Promise.reject(response)
+
+        // return Promise.reject(new Error(response.statusText))
+      }
+    }
+
+    function json(response) {
+      console.log(response);
+      console.log('json');
+      return response.json()
+    }
+
+    useResponse = async (data) => {
+
+      this.props.navigation.navigate('PhoneValidateScreen')
+
+    }
+
+  }
 
 
   render() {
-    const {mobile} = this.state
+    const {number} = this.state
     return (
       <View style={styles.container}>
         <View>
@@ -59,10 +116,9 @@ class PhoneValidateInputScreen extends Component {
               marginBottom: width * 0.06
             }}>Phone Number</Text>
             <PhoneInput
-
               onChangePhoneNumber={this.onPhoneNumberChange}
               initialCountry='az'
-              value={mobile} style={{
+              value={number} style={{
               fontSize: width * 0.037,
               borderBottomWidth: 1,
               borderColor: '#353535',
@@ -73,16 +129,15 @@ class PhoneValidateInputScreen extends Component {
             }}/>
           </View>
 
-
         </View>
         <View style={styles.buttonContainer}>
           <MyButton
-            onPress={() => this.props.navigation.navigate('PhoneValidateScreen')}
-            // onPress={this.onPres}
-                    backgroundColor='#451E5D'
-                    color='#fff'
-                    borderColor='451E5D'
-                    text={I18n.t('next')}
+            //    onPress={() => this.props.navigation.navigate('PhoneValidateScreen')}
+            onPress={this.onPressLogin}
+            backgroundColor='#451E5D'
+            color='#fff'
+            borderColor='451E5D'
+            text={I18n.t('next')}
           />
 
         </View>
