@@ -1,4 +1,4 @@
-const mainUrl = 'http://a1f6e109.ngrok.io/'
+const mainUrl = 'https://bb1fb716.ngrok.io/'
 export const driverRegistration = mainUrl + 'driver/api/drivers'
 
 

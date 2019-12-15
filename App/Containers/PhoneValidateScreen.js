@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {View, Text, KeyboardAvoidingView} from 'react-native'
+import {View, Text, KeyboardAvoidingView,Alert} from 'react-native'
 import {connect} from 'react-redux'
 import CodeInput from 'react-native-code-input'
 import MyButton from '../Components/MyButton'
@@ -11,68 +11,107 @@ import _ from 'lodash';
 
 // Styles
 import styles from './Styles/PhoneValidateScreenStyle'
+import {driverRegistration} from "../Config/API";
 
 class PhoneValidateScreen extends Component {
 
-  constructor(props) {
-    super(props);
+  state = {
+    code: '',
+    verification_id: '',
 
-    this.state = {
-      codeArr: new Array(this.props.codeLength).fill(''),
-      currentIndex: 0
-    };
-
-    this.codeInputRefs = [];
   }
+  _alert = message => Alert.alert(
+    'Confirmation Code',
+    message,
+    [{text: 'OK'}],
+    {cancelable: false}
+  )
 
-  _onKeyPress(e) {
-    if (e.nativeEvent.key === 'Backspace') {
-      const {currentIndex} = this.state;
-      let newCodeArr = _.clone(this.state.codeArr);
-      const nextIndex = currentIndex > 0 ? currentIndex - 1 : 0;
-      for (const i in newCodeArr) {
-        if (i >= nextIndex) {
-          newCodeArr[i] = '';
-        }
-      }
-      this.props.onCodeChange(newCodeArr.join(''))
-      this._setFocus(nextIndex);
-    }
-  }
+  componentDidMount() {
+    this.setState({
+      verification_id: this.props.verification_id,
 
-  _onInputCode(character, index) {
-
-    const {codeLength, onFulfill, compareWithCode, ignoreCase, onCodeChange} = this.props;
-    let newCodeArr = _.clone(this.state.codeArr);
-    newCodeArr[index] = character;
-
-    if (index == codeLength - 1) {
-
-      const code = newCodeArr.join('');
-
-      if (compareWithCode) {
-        const isMatching = this._isMatchingCode(code, compareWithCode, ignoreCase);
-        onFulfill(isMatching, code);
-        !isMatching && this.clear();
-      } else {
-        onFulfill(code);
-      }
-      this._blur(this.state.currentIndex);
-    } else {
-      this._setFocus(this.state.currentIndex + 1);
-    }
-
-    this.setState(prevState => {
-      return {
-        codeArr: newCodeArr,
-        currentIndex: prevState.currentIndex + 1
-      };
-    }, () => {
-      onCodeChange(newCodeArr.join(''))
     });
+
   }
+
+  _onFulfill1 = (code)  => {
+    let {verification_id} = this.state;
+
+    let body = {
+      verification_id: verification_id,
+      sms_code: code,
+      step: "code"
+    }
+
+    // this.setState({loading: true})
+    const self = this
+
+    // console.log(body, login)
+    fetch(driverRegistration, {
+      body: JSON.stringify(body),
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8'
+      },
+
+    })
+      .then(json)
+      .then(status)
+      .then(function (data) {
+        console.log('Request succeeded with JSON response', data);
+
+
+        console.log(data);
+        // self.props.attemptRegister(number, verification_id)
+        // console.log(number);
+        self.props.navigation.navigate('RegisterScreen')
+
+
+      })
+      .catch(function (error) {
+        console.log(error);
+        console.log('err');
+      });
+
+    function status(response) {
+      console.log(response)
+      console.log('status');
+      self.setState({loading: false})
+      if (response.status === "approved") {
+        return Promise.resolve(response)
+      } else {
+        return Promise.reject(response)
+
+        // return Promise.reject(new Error(response.statusText))
+      }
+    }
+
+    function json(response) {
+      console.log(response);
+      console.log('json');
+      return response.json()
+    }
+
+    useResponse = async (data) => {
+
+      const {number} = this.state;
+      const verification_id = data.id
+      this.props.attemptRegister(number, verification_id)
+      console.log(number);
+      this.props.navigation.navigate('PhoneValidateScreen')
+
+    }
+
+  }
+
+
 
   render() {
+    const {verification_id} = this.props;
+    console.log('redux');
+    console.log(verification_id);
+    console.log('redux');
     return (
       <View style={styles.container}>
 
@@ -90,11 +129,10 @@ class PhoneValidateScreen extends Component {
               inputPosition='center'
               codeLength={6}
               size={25}
-              // onFulfill={(code) => this._onFinishCheckingCode1(code)}
+              onFulfill={this._onFulfill1}
               containerStyle={{marginTop: 40, marginBottom: 45}}
               codeInputStyle={{borderWidth: 0, backgroundColor: '#D9D9DA'}}
-              onChangeText={text => this._onInputCode(text, id)}
-              onKeyPress={(e) => this._onKeyPress(e)}
+
             />
           </KeyboardAvoidingView>
 
@@ -113,7 +151,10 @@ class PhoneValidateScreen extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return {}
+  return {
+    number: state.register.number,
+    verification_id: state.register.verification_id
+  }
 }
 
 const mapDispatchToProps = (dispatch) => {

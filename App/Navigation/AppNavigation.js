@@ -98,7 +98,7 @@ const PrimaryNav = createStackNavigator({
 }, {
   // Default config for all screens
 
-  initialRouteName: 'PhoneValidateInputScreen',
+  initialRouteName: 'FirstScreen',
   navigationOptions: {
     headerStyle: styles.header
   }

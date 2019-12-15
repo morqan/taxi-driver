@@ -3,12 +3,14 @@ import {View, Text, Dimensions} from 'react-native'
 import {connect} from 'react-redux'
 
 // Add Actions - replace 'Your' with whatever your reducer is called :)
-// import YourActions from '../Redux/YourRedux'
+import RegisterAction from '../Redux/RegisterRedux'
 import I18n from '../I18n';
 import PhoneInput from 'react-native-phone-input'
 import MyInput from '../Components/MyInput';
 import MyButton from '../Components/MyButton';
 import {driverRegistration, toUrl} from '../Config/API'
+import Spinner from 'react-native-loading-spinner-overlay';
+
 // Styles
 import styles from './Styles/RegisterScreenStyle'
 
@@ -20,17 +22,11 @@ class PhoneValidateInputScreen extends Component {
   state = {
     country_code: '',
     number: '',
-    step: 'phone_number'
+    step: 'phone_number',
+    spinner: false
 
   }
-  onPres = () => {
-    const {mobile, password} = this.state
-    this.isAttempting = true
-    // attempt a login - a saga is listening to pick it up from here.
-    alert(mobile)
-    // this.props.attemptLogin(mobile, password)
-    // this.props.navigation.navigate('MapScreen')
-  }
+
   onPhoneNumberChange = () => {
     this.setState({
       country_code: this.phone.getCountryCode(),
@@ -42,6 +38,8 @@ class PhoneValidateInputScreen extends Component {
   };
 
   onPressLogin = () => {
+
+console.log(this.props.fetching);
     let number = this.state.number;
     let country_code = '+' + this.state.country_code;
     let num = number.replace(country_code, '');
@@ -67,7 +65,19 @@ class PhoneValidateInputScreen extends Component {
       .then(status)
       .then(function (data) {
         console.log('Request succeeded with JSON response', data);
-         useResponse(data)
+
+        const {number} = self.state;
+        const verification_id = data.id
+
+        console.log(data.id);
+        self.props.attemptRegister(number, verification_id)
+        console.log(number);
+        if (data.status === 'approved')
+          self.props.navigation.navigate('RegisterScreen')
+        else if (data.status === 'pending')
+          self.props.navigation.navigate('PhoneValidateScreen')
+
+
       })
       .catch(function (error) {
         console.log(error);
@@ -93,19 +103,21 @@ class PhoneValidateInputScreen extends Component {
       return response.json()
     }
 
-    useResponse = async (data) => {
-
-      this.props.navigation.navigate('PhoneValidateScreen')
-
-    }
 
   }
 
 
   render() {
-    const {number} = this.state
+    const {number} = this.state;
+    console.log(this.props);
     return (
       <View style={styles.container}>
+
+        <Spinner
+          visible={this.props.fetching}
+          textContent={'Loading...'}
+          textStyle={styles.spinnerTextStyle}
+        />
         <View>
 
 
@@ -134,6 +146,7 @@ class PhoneValidateInputScreen extends Component {
           <MyButton
             //    onPress={() => this.props.navigation.navigate('PhoneValidateScreen')}
             onPress={this.onPressLogin}
+
             backgroundColor='#451E5D'
             color='#fff'
             borderColor='451E5D'
@@ -148,11 +161,17 @@ class PhoneValidateInputScreen extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return {}
+  return {
+    number: state.register.number,
+    verification_id: state.register.verification_id,
+    fetching: state.register.fetching
+  }
 }
 
 const mapDispatchToProps = (dispatch) => {
-  return {}
+  return {
+    attemptRegister: (number, verification_id) => dispatch(RegisterAction.registerRequest(number, verification_id))
+  }
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(PhoneValidateInputScreen)

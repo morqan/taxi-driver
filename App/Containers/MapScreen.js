@@ -56,16 +56,11 @@ class MapScreen extends Component {
 
 
         >
-          {/*<Marker coordinate={this.state}/>*/}
+
         </MapView>
         <View style={styles.buttonContainer}>
 
-          {/*<MyButton  onPress={() => this.props.navigation.navigate('DestinationAddressScreen')}*/}
-          {/*           backgroundColor='#fff'*/}
-          {/*           color='#451E5D'*/}
-          {/*           borderColor='#fff'*/}
-          {/*           text={I18n.t('gedeceyinizUnvan')}*/}
-          {/*/>*/}
+
         </View>
         <NewOrderModal />
       </View>
