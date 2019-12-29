@@ -39,7 +39,7 @@ class PhoneValidateInputScreen extends Component {
 
   onPressLogin = () => {
 
-console.log(this.props.fetching);
+    console.log(this.props.fetching);
     let number = this.state.number;
     let country_code = '+' + this.state.country_code;
     let num = number.replace(country_code, '');
@@ -88,7 +88,7 @@ console.log(this.props.fetching);
       console.log(response)
       console.log('status');
       self.setState({loading: false})
-      if (response.status === "pending") {
+      if (response.status === "pending" || response.status === "approved") {
         return Promise.resolve(response)
       } else {
         return Promise.reject(response)
@@ -113,11 +113,11 @@ console.log(this.props.fetching);
     return (
       <View style={styles.container}>
 
-        <Spinner
-          visible={this.props.fetching}
-          textContent={'Loading...'}
-          textStyle={styles.spinnerTextStyle}
-        />
+        {/*<Spinner*/}
+        {/*  visible={this.props.fetching}*/}
+        {/*  textContent={'Loading...'}*/}
+        {/*  textStyle={styles.spinnerTextStyle}*/}
+        {/*/>*/}
         <View>
 
 

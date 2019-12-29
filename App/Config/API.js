@@ -1,5 +1,6 @@
-const mainUrl = 'https://bb1fb716.ngrok.io/'
+const mainUrl = 'http://6second-api-dev.eu-west-1.elasticbeanstalk.com/'
 export const driverRegistration = mainUrl + 'driver/api/drivers'
+export const driverLogin = mainUrl + 'driver/api/drivers/token'
 
 
 export const login = mainUrl + 'auth/send-sms'

@@ -77,7 +77,7 @@ class RegisterScreen extends Component {
       console.log(response)
       console.log('status');
       self.setState({loading: false})
-      if (response.status === "pending") {
+      if (response.status === 200) {
         return Promise.resolve(response)
       } else {
         return Promise.reject(response)
